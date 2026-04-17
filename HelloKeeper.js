@@ -1,54 +1,52 @@
 "use strict";
 
-"use strict";
-
 (function() {
-    const originalFetch = window.fetch;
-    window.fetch = async (...args) => {
-        // Логуємо взагалі всі запити, щоб зрозуміти, що сайт викликає насправді
-        const url = (typeof args[0] === 'string') ? args[0] : args[0].url;
-        
-        const response = await originalFetch(...args);
+    const XHR = XMLHttpRequest.prototype;
+    const open = XHR.open;
+    const send = XHR.send;
 
-        // Шукаємо будь-який запит, пов'язаний з інфо про чати
-        if (url.includes('getchatsinfo')) {
-            console.log("🎯 Впіймав ціль:", url);
-
-            const clone = response.clone();
-            let data;
-            
-            try {
-                data = await clone.json();
-            } catch (e) {
-                return response; // Не JSON
-            }
-
-            // Модифікуємо об'єкт (підтримка і масиву chats, і поодинокого об'єкта chat)
-            const processChat = (chat) => {
-                console.log("🛠 Модифікую чат:", chat.group_title || chat.chat_id);
-                chat.license_type = 3; // Спробуй 3 замість 2
-                chat.license_left = 365;
-                chat.is_group_owner = true;
-                if (chat.limits) {
-                    chat.limits.max_triggers = 999;
-                    chat.limits.max_trigger_actions = 100;
-                }
-            };
-
-            if (data.chats && Array.isArray(data.chats)) {
-                data.chats.forEach(processChat);
-            } else if (data.chat) {
-                processChat(data.chat);
-            }
-
-            return new Response(JSON.stringify(data), {
-                status: response.status,
-                statusText: response.statusText,
-                headers: response.headers
-            });
-        }
-
-        return response;
+    // Перехоплюємо відкриття запиту
+    XHR.open = function(method, url) {
+        this._url = url; // Зберігаємо URL для ідентифікації
+        return open.apply(this, arguments);
     };
-    console.log("🚀 Покращений перехоплювач запущено. Чекаю на запити...");
+
+    // Перехоплюємо відправку та відповідь
+    XHR.send = function() {
+        this.addEventListener('readystatechange', function() {
+            // 4 — запит завершено, URL містить ціль
+            if (this.readyState === 4 && this._url.includes('getchatsinfo')) {
+                console.log("🎯 Впіймав XHR запит до:", this._url);
+
+                try {
+                    // Отримуємо оригінальні дані
+                    let data = JSON.parse(this.responseText);
+
+                    if (data.chats && Array.isArray(data.chats)) {
+                        data.chats.forEach(chat => {
+                            console.log(`🛠 Патчу чат: ${chat.group_title}`);
+                            
+                            chat.license_type = 3; // Міняємо на Ultimate
+                            chat.license_left = 365;
+                            chat.is_group_owner = true;
+                            
+                            if (chat.limits) {
+                                chat.limits.max_triggers = 999;
+                                chat.limits.max_trigger_actions = 100;
+                            }
+                        });
+
+                        // "Магія": підміняємо властивості об'єкта відповіді
+                        Object.defineProperty(this, 'responseText', { value: JSON.stringify(data) });
+                        Object.defineProperty(this, 'response', { value: JSON.stringify(data) });
+                    }
+                } catch (e) {
+                    console.error("❌ Помилка при парсингу JSON:", e);
+                }
+            }
+        }, false);
+        return send.apply(this, arguments);
+    };
+
+    console.log("🚀 XHR-перехоплювач активовано. Спровокуй оновлення даних на сайті!");
 })();
