@@ -16,7 +16,7 @@
             if (data.chats && Array.isArray(data.chats)) {
                 data.chats.forEach(chat => {
                     // Максимальний рівень ліцензії
-                    chat.license_type = 3; 
+                    chat.license_type = 2; 
                     chat.license_left = 365;
                     chat.is_group_owner = true;
 
