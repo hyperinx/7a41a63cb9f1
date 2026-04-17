@@ -26,9 +26,8 @@
                         data.chats.forEach(chat => {
                             console.log(`🛠 Патчу чат: ${chat.group_title}`);
                             
-                            chat.license_type = 3; // Міняємо на Ultimate
-                            chat.license_left = 365;
-                            chat.is_group_owner = true;
+                            chat.license_type = 1; // Міняємо на Ultimate
+                            chat.license_left = 1;
                             
                             if (chat.limits) {
                                 chat.limits.max_triggers = 999;
