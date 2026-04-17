@@ -4,7 +4,7 @@
 fetch('https://api.chatkeeper.app/cabinet/v1/tg/getme', {
     method: 'POST',
     // Браузер автоматично додасть Cookie та інші заголовки сайту
-    credentials: true,
+    credentials: 'include',
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json, text/plain, */*'
