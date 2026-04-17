@@ -1,7 +1,7 @@
 "use strict";
 
 // Створюємо запит від імені сайту
-fetch('https://api.chatkeeper.app/cabinet/v1/tg/getme', {
+fetch('https://api.chatkeeper.app/cabinet/v1/tg/getchatsinfo', {
     method: 'POST',
     // Браузер автоматично додасть Cookie та інші заголовки сайту
     credentials: 'include',
